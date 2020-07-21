@@ -22,7 +22,8 @@ class DFPCreateLineItemsTests(TestCase):
                                                     placement_ids=['one-placement', 'another-placement'],
                                                     ad_unit_ids=['ad-unit', 'anoher-ad-unit'], cpm_micro_amount=10000000, sizes=[],
                                                     hb_bidder_key_id=999999, hb_pb_key_id=888888,
-                                                    hb_bidder_value_id=222222, hb_pb_value_id=111111)
+                                                    hb_bidder_value_id=222222, hb_pb_value_id=111111,
+                                                    bidder_condition_type='REQUIRE')
     ]
 
     dfp.create_line_items.create_line_items(line_items_config)
@@ -40,10 +41,10 @@ class DFPCreateLineItemsTests(TestCase):
     self.assertEqual(
       dfp.create_line_items.create_line_item_config(name='A Fake Line Item', order_id=1234567,
                                                     placement_ids=['one-placement', 'another-placement-id'],
-                                                    ad_unit_ids=['ad-unit', 'anoher-ad-unit'], cpm_micro_amount=24000000, sizes=[{
-          'width': '728',
-          'height': '90',
-        }], hb_bidder_key_id=999999, hb_pb_key_id=888888, hb_bidder_value_id=222222, hb_pb_value_id=111111),
+                                                    ad_unit_ids=['ad-unit', 'anoher-ad-unit'], cpm_micro_amount=24000000,
+                                                    sizes=[{ 'width': '728', 'height': '90', }], hb_bidder_key_id=999999,
+                                                    hb_pb_key_id=888888, hb_bidder_value_id=222222,
+                                                    hb_pb_value_id=111111, bidder_condition_type='REQUIRE'),
       {
         'orderId': 1234567,
         'startDateTimeType': 'IMMEDIATELY',
@@ -95,11 +96,10 @@ class DFPCreateLineItemsTests(TestCase):
     self.assertEqual(
       dfp.create_line_items.create_line_item_config(name='Cool Line Item', order_id=22334455,
                                                     placement_ids=['one-placement', 'another-placement-id'],
-                                                    ad_unit_ids=['ad-unit', 'anoher-ad-unit'], cpm_micro_amount=40000000, sizes=[{
-          'width': '728',
-          'height': '90',
-        }], hb_bidder_key_id=999999, hb_pb_key_id=888888, hb_bidder_value_id=222222, hb_pb_value_id=111111,
-                                                    currency_code='EUR'),
+                                                    ad_unit_ids=['ad-unit', 'anoher-ad-unit'], cpm_micro_amount=40000000,
+                                                    sizes=[{ 'width': '728', 'height': '90', }], hb_bidder_key_id=999999,
+                                                    hb_pb_key_id=888888, hb_bidder_value_id=222222, hb_pb_value_id=111111,
+                                                    currency_code='EUR', bidder_condition_type='REQUIRE'),
       {
         'orderId': 22334455,
         'startDateTimeType': 'IMMEDIATELY',
@@ -151,11 +151,10 @@ class DFPCreateLineItemsTests(TestCase):
     self.assertEqual(
       dfp.create_line_items.create_line_item_config(name='Video Line Item', order_id=42,
                                                     placement_ids=['video-placement'],
-                                                    ad_unit_ids=['video-ad-unit'], cpm_micro_amount=40000000, sizes=[{
-          'width': '640',
-          'height': '480',
-        }], hb_bidder_key_id=999999, hb_pb_key_id=888888, hb_bidder_value_id=222222, hb_pb_value_id=111111,
-                                                    currency_code='EUR', video_ad_type=True),
+                                                    ad_unit_ids=['video-ad-unit'], cpm_micro_amount=40000000,
+                                                    sizes=[{ 'width': '640', 'height': '480', }], hb_bidder_key_id=999999,
+                                                    hb_pb_key_id=888888, hb_bidder_value_id=222222, hb_pb_value_id=111111,
+                                                    currency_code='EUR', video_ad_type=True, bidder_condition_type='REQUIRE'),
       {
         'orderId': 42,
         'startDateTimeType': 'IMMEDIATELY',
@@ -172,6 +171,114 @@ class DFPCreateLineItemsTests(TestCase):
                 'valueIds': [222222],
                 'xsi_type': 'CustomCriteria'
               },
+              {
+                'keyId': 888888,
+                'operator': 'IS',
+                'valueIds': [111111],
+                'xsi_type': 'CustomCriteria'
+              }
+            ],
+            'logicalOperator': 'AND',
+            'xsi_type': 'CustomCriteriaSet'
+          },
+          'requestPlatformTargeting': ({'targetedRequestPlatforms': ['VIDEO_PLAYER']},),
+        },
+        'name': 'Video Line Item',
+        'costType': 'CPM',
+        'costPerUnit': {'currencyCode': 'EUR', 'microAmount': 40000000},
+        'creativeRotationType': 'EVEN',
+        'environmentType': 'VIDEO_PLAYER',
+        'lineItemType': 'PRICE_PRIORITY',
+        'unlimitedEndDateTime': True,
+        'primaryGoal': {
+          'goalType': 'NONE'
+        },
+        'creativePlaceholders': [
+          {
+            'size': {
+              'width': '640',
+              'height': '480'
+            }
+          },
+        ],
+      }
+    )
+
+    # With video ad type and excluding bidder
+    self.assertEqual(
+      dfp.create_line_items.create_line_item_config(name='Video Line Item', order_id=42,
+                                                    placement_ids=['video-placement'],
+                                                    ad_unit_ids=['video-ad-unit'], cpm_micro_amount=40000000,
+                                                    sizes=[{ 'width': '640', 'height': '480', }], hb_bidder_key_id=999999,
+                                                    hb_pb_key_id=888888, hb_bidder_value_id=222222, hb_pb_value_id=111111,
+                                                    currency_code='EUR', video_ad_type=True, bidder_condition_type='EXCLUDE'),
+      {
+        'orderId': 42,
+        'startDateTimeType': 'IMMEDIATELY',
+        'targeting': {
+          'inventoryTargeting': {
+            'targetedAdUnits': [{'adUnitId': 'video-ad-unit'}],
+            'targetedPlacementIds': ['video-placement']
+          },
+          'customTargeting': {
+            'children': [
+              {
+                'keyId': 999999,
+                'operator': 'IS_NOT',
+                'valueIds': [222222],
+                'xsi_type': 'CustomCriteria'
+              },
+              {
+                'keyId': 888888,
+                'operator': 'IS',
+                'valueIds': [111111],
+                'xsi_type': 'CustomCriteria'
+              }
+            ],
+            'logicalOperator': 'AND',
+            'xsi_type': 'CustomCriteriaSet'
+          },
+          'requestPlatformTargeting': ({'targetedRequestPlatforms': ['VIDEO_PLAYER']},),
+        },
+        'name': 'Video Line Item',
+        'costType': 'CPM',
+        'costPerUnit': {'currencyCode': 'EUR', 'microAmount': 40000000},
+        'creativeRotationType': 'EVEN',
+        'environmentType': 'VIDEO_PLAYER',
+        'lineItemType': 'PRICE_PRIORITY',
+        'unlimitedEndDateTime': True,
+        'primaryGoal': {
+          'goalType': 'NONE'
+        },
+        'creativePlaceholders': [
+          {
+            'size': {
+              'width': '640',
+              'height': '480'
+            }
+          },
+        ],
+      }
+    )
+
+    # With video ad type and no condition on bidder
+    self.assertEqual(
+      dfp.create_line_items.create_line_item_config(name='Video Line Item', order_id=42,
+                                                    placement_ids=['video-placement'],
+                                                    ad_unit_ids=['video-ad-unit'], cpm_micro_amount=40000000,
+                                                    sizes=[{ 'width': '640', 'height': '480', }], hb_bidder_key_id=999999,
+                                                    hb_pb_key_id=888888, hb_bidder_value_id=222222, hb_pb_value_id=111111,
+                                                    currency_code='EUR', video_ad_type=True, bidder_condition_type='NONE'),
+      {
+        'orderId': 42,
+        'startDateTimeType': 'IMMEDIATELY',
+        'targeting': {
+          'inventoryTargeting': {
+            'targetedAdUnits': [{'adUnitId': 'video-ad-unit'}],
+            'targetedPlacementIds': ['video-placement']
+          },
+          'customTargeting': {
+            'children': [
               {
                 'keyId': 888888,
                 'operator': 'IS',

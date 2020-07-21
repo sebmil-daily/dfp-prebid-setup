@@ -91,6 +91,12 @@ PREBID_PRICE_BUCKETS = {
   'increment': 0.10,
 }
 
+# Type of condition for `hb_bidder`. This can be:
+# 'REQUIRE' : Each line item will have a condition `hb_bidder` IS <PREBID_BIDDER_CODE>
+# 'EXCLUDE' : Each line item will have a condition `hb_bidder` IS NOT <PREBID_BIDDER_CODE>
+# 'NONE' : Line items won't have any condition on `hb_bidder`
+PREBID_BIDDER_CONDITION_TYPE = 'REQUIRE'
+
 #########################################################################
 
 # Try importing local settings, which will take precedence.

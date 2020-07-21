@@ -272,7 +272,8 @@ class AddNewPrebidPartnerTests(TestCase):
     tasks.add_new_prebid_partner.setup_partner(user_email=email, advertiser_name=advertiser, order_name=order,
                                                placements=placements, ad_units=[], sizes=sizes,
                                                bidder_code=bidder_code, prices=prices, num_creatives=2,
-                                               currency_code='USD', line_item_format=u'{bidder_code}: HB ${price:0>5}')
+                                               currency_code='USD', line_item_format=u'{bidder_code}: HB ${price:0>5}',
+                                               bidder_condition_type='REQUIRE')
 
     mock_get_users.get_user_id_by_email.assert_called_once_with(email)
     mock_get_placements.get_placement_ids_by_name.assert_called_once_with(
@@ -294,12 +295,14 @@ class AddNewPrebidPartnerTests(TestCase):
 
     configs = tasks.add_new_prebid_partner.create_line_item_configs(prices=[100000, 200000, 300000], order_id=1234567,
                                                                     placement_ids=[9876543, 1234567], ad_unit_ids=None,
-                                                                    bidder_code='iamabiddr', sizes=[{
-            'width': '728',
-            'height': '90'
-        }], hb_bidder_key_id=999999, hb_pb_key_id=888888, currency_code='HUF',
-        line_item_format=u'{bidder_code}: HB ${price:0>5}', HBBidderValueGetter=MagicMock(
-            return_value=3434343434), HBPBValueGetter=MagicMock(return_value=5656565656), video_ad_type=False)
+                                                                    bidder_code='iamabiddr',
+                                                                    sizes=[{ 'width': '728', 'height': '90' }],
+                                                                    hb_bidder_key_id=999999, hb_pb_key_id=888888,
+                                                                    currency_code='HUF',
+                                                                    line_item_format=u'{bidder_code}: HB ${price:0>5}',
+                                                                    HBBidderValueGetter=MagicMock(return_value=3434343434),
+                                                                    HBPBValueGetter=MagicMock(return_value=5656565656),
+                                                                    video_ad_type=False, bidder_condition_type='REQUIRE')
 
     self.assertEqual(len(configs), 3)
 
@@ -325,12 +328,13 @@ class AddNewPrebidPartnerTests(TestCase):
 
     configs = tasks.add_new_prebid_partner.create_line_item_configs(prices=[1], order_id=2,
                                                                     placement_ids=[3], ad_unit_ids=None,
-                                                                    bidder_code='iamabiddr', sizes=[{
-            'width': '640',
-            'height': '480'
-        }], hb_bidder_key_id=4, hb_pb_key_id=5, currency_code='HUF',
-        line_item_format=u'{bidder_code}: HB ${price:0>5}', HBBidderValueGetter=MagicMock(
-            return_value=6), HBPBValueGetter=MagicMock(return_value=7), video_ad_type=True)
+                                                                    bidder_code='iamabiddr',
+                                                                    sizes=[{ 'width': '640', 'height': '480' }],
+                                                                    hb_bidder_key_id=4, hb_pb_key_id=5, currency_code='HUF',
+                                                                    line_item_format=u'{bidder_code}: HB ${price:0>5}',
+                                                                    HBBidderValueGetter=MagicMock(return_value=6),
+                                                                    HBPBValueGetter=MagicMock(return_value=7),
+                                                                    video_ad_type=True, bidder_condition_type='REQUIRE')
 
     self.assertEqual(len(configs), 1)
     self.assertEqual(configs[0]['environmentType'], 'VIDEO_PLAYER')

@@ -50,7 +50,8 @@ logger = logging.getLogger(__name__)
 
 
 def setup_partner(user_email, advertiser_name, order_name, placements, ad_units, sizes, bidder_code, prices,
-                  num_creatives, currency_code, line_item_format, video_ad_type=False, redirect_url=''):
+                  num_creatives, currency_code, line_item_format, video_ad_type=False, redirect_url='',
+                  bidder_condition_type='REQUIRE'):
   """
   Call all necessary DFP tasks for a new Prebid partner setup.
   """
@@ -87,7 +88,7 @@ def setup_partner(user_email, advertiser_name, order_name, placements, ad_units,
   # Create line items.
   line_items_config = create_line_item_configs(prices, order_id, placement_ids, ad_unit_ids, bidder_code, sizes,
                                                hb_bidder_key_id, hb_pb_key_id, currency_code, line_item_format,
-                                               HBBidderValueGetter, HBPBValueGetter, video_ad_type)
+                                               HBBidderValueGetter, HBPBValueGetter, video_ad_type, bidder_condition_type)
   logger.info("Creating line items...")
   line_item_ids = dfp.create_line_items.create_line_items(line_items_config)
 
@@ -163,7 +164,7 @@ def get_or_create_dfp_targeting_key(name):
 
 def create_line_item_configs(prices, order_id, placement_ids, ad_unit_ids, bidder_code, sizes, hb_bidder_key_id,
                              hb_pb_key_id, currency_code, line_item_format, HBBidderValueGetter, HBPBValueGetter,
-                             video_ad_type):
+                             video_ad_type, bidder_condition_type):
   """
   Create a line item config for each price bucket.
 
@@ -207,7 +208,7 @@ def create_line_item_configs(prices, order_id, placement_ids, ad_unit_ids, bidde
                                                            hb_bidder_key_id=hb_bidder_key_id, hb_pb_key_id=hb_pb_key_id,
                                                            hb_bidder_value_id=hb_bidder_value_id,
                                                            hb_pb_value_id=hb_pb_value_id, currency_code=currency_code,
-                                                           video_ad_type=video_ad_type)
+                                                           video_ad_type=video_ad_type, bidder_condition_type=bidder_condition_type)
 
     line_items_config.append(config)
 
@@ -321,14 +322,21 @@ def main():
   if price_buckets is None:
     raise MissingSettingException('PREBID_PRICE_BUCKETS')
 
+  bidder_condition_type = getattr(settings, 'PREBID_BIDDER_CONDITION_TYPE', 'REQUIRE')
   check_price_buckets_validity(price_buckets)
 
   prices = get_prices_array(price_buckets)
   prices_summary = get_prices_summary_string(prices,
     price_buckets['precision'])
 
-  logger.info(
-    u"""
+  if bidder_condition_type == 'REQUIRE':
+    bidder_condition_text = "{name_start_format}hb_bidder{format_end} = {value_start_format}{bidder_code}{format_end}"
+  elif bidder_condition_type == 'EXCLUDE':
+    bidder_condition_text = "{name_start_format}hb_bidder{format_end} != {value_start_format}{bidder_code}{format_end}"
+  else:
+    bidder_condition_text = "{name_start_format}hb_bidder{format_end} is ignored"
+
+  info_text = u"""
 
     Going to create {name_start_format}{num_line_items}{format_end} new line items.
       {name_start_format}Order{format_end}: {value_start_format}{order_name}{format_end}
@@ -336,10 +344,24 @@ def main():
 
     Line items will have targeting:
       {name_start_format}hb_pb{format_end} = {value_start_format}{prices_summary}{format_end}
-      {name_start_format}hb_bidder{format_end} = {value_start_format}{bidder_code}{format_end}
+      """ + bidder_condition_text + u"""
       {name_start_format}placements{format_end} = {value_start_format}{placements}{format_end}
       {name_start_format}ad units{format_end} = {value_start_format}{ad_units}{format_end}
-    """.format(
+    """
+
+  if video_ad_type:
+    info_text += (u"""
+    Line items will have VAST redirect creatives with redirect URL:
+      {value_start_format}{redirect_url}{format_end}
+
+      """)
+  else:
+    info_text += (u"""
+    Line items will have third party creatives based on snippet.html content.
+
+      """)
+
+  logger.info(info_text.format(
       num_line_items = len(prices),
       order_name=order_name,
       advertiser=advertiser_name,
@@ -349,26 +371,11 @@ def main():
       placements=placements,
       ad_units=ad_units,
       sizes=sizes,
+      redirect_url=vast_redirect_url,
       name_start_format=color.BOLD,
       format_end=color.END,
       value_start_format=color.BLUE,
     ))
-
-  if video_ad_type:
-    logger.info(
-    u"""    Line items will have VAST redirect creatives with redirect URL:
-      {value_start_format}{redirect_url}{format_end}
-
-    """.format(
-      redirect_url=vast_redirect_url,
-      value_start_format=color.BLUE,
-      format_end=color.END,
-    ))
-  else:
-    logger.info(
-    u"""    Line items will have third party creatives based on snippet.html content.
-
-    """)
 
   ok = input('Is this correct? (y/n)\n')
 
@@ -376,7 +383,7 @@ def main():
     logger.info('Exiting.')
     return
 
-  setup_partner(user_email, advertiser_name, order_name, placements, ad_units, sizes, bidder_code, prices, num_creatives, currency_code, line_item_format, video_ad_type, vast_redirect_url)
+  setup_partner(user_email, advertiser_name, order_name, placements, ad_units, sizes, bidder_code, prices, num_creatives, currency_code, line_item_format, video_ad_type, vast_redirect_url, bidder_condition_type)
 
 if __name__ == '__main__':
   main()
