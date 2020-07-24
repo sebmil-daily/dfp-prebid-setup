@@ -27,22 +27,18 @@ DFP_TARGETED_AD_UNIT_NAMES = []
 # Sizes of placements. These are used to set line item and creative sizes.
 DFP_PLACEMENT_SIZES = [
   {
-    'width': '300',
-    'height': '250'
-  },
-  {
-    'width': '728',
-    'height': '90'
+    'width': '640',
+    'height': '480'
   },
 ]
 
 # If DFP_VIDEO_AD_TYPE is set to False, traditional ad units will be created.
 # If it is set to True, video ad units and creatives will be created instead.
 # When creating video ad units, you also need to fill the DFP_VAST_REDIRECT_URL value.
-DFP_VIDEO_AD_TYPE = False
+DFP_VIDEO_AD_TYPE = True
 
 # Redirect URL for video creatives.
-DFP_VAST_REDIRECT_URL = ''
+DFP_VAST_REDIRECT_URL = 'https://prebid-server.rubiconproject.com/cache?uuid=%%PATTERN:hb_uuid%%'
 
 # Whether we should create the advertiser in DFP if it does not exist.
 # If False, the program will exit rather than create an advertiser.
@@ -63,7 +59,7 @@ DFP_USE_EXISTING_ORDER_IF_EXISTS = False
 #
 # This will default to the number of placements specified in
 # `DFP_TARGETED_PLACEMENT_NAMES`.
-# DFP_NUM_CREATIVES_PER_LINE_ITEM = 2
+DFP_NUM_CREATIVES_PER_LINE_ITEM = 5
 
 # Optional
 # The currency to use in DFP when setting line item CPMs. Defaults to 'USD'.
